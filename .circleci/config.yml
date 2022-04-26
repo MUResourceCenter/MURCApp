@@ -1,26 +1,30 @@
 version: 2
 publish: &publish
-  working_directory: ~/my-app
+  working_directory: ~/MUResourceCenter/my-app
   docker:
-    - image: circleci/node:16
+    - image: circleci/node:13
   steps:
     - checkout
 
     - run:
         name: Installing dependencies
         command: npm ci
-
+        
     - run:
-        name: Setup Expo
-        uses: expo/expo-github-action@v7
-        with:
-          expo-version: latest
-          token: NFQOtLrRHC0YBpDQMjaUU_WYLKmfvw7-doGHPEcC
-
+        name: Installing Expo-CLI
+        command: npm install expo-cli@3.13.1
+        
     - run:
-        name: Publish to Expo
-        command: npx expo-cli publish --non-interactive --max-workers 1 --release-channel $EXPO_RELEASE_CHANNEL
-
+        name: Login into Expo
+        command: npx expo-cli login -u $EXPO_USERNAME -p $EXPO_PASSWORD
+    
+    - run:
+        name: Build Android
+        command: npx expo build:android -t apk --non-interactive --release-channel $EXPO_RELEASE_CHANNEL --no-wait
+    - run:
+        name: Build iOS
+        command: npx expo build:ios -t simulator --non-interactive --release-channel $EXPO_RELEASE_CHANNEL --no-wait 
+    
 jobs:
   publish_to_expo_dev:
     environment:
@@ -31,7 +35,7 @@ jobs:
     environment:
       EXPO_RELEASE_CHANNEL: default
     <<: *publish
-
+          
 workflows:
   version: 2
   my_app:
@@ -43,4 +47,4 @@ workflows:
       - publish_to_expo_prod:
           filters:
             branches:
-              only: main
+              only: staging
